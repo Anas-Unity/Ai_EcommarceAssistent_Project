@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopOps - Minimalist Operations & AI Copilot</title>
+  <!-- Chart.js & Markdown CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #090d16;
+      --sidebar: #0f1523;
+      --card: #131b2c;
+      --card-border: #1e293d;
+      --text: #f3f4f6;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
+
+    /* ========================================================= */
+    /* LEFT NAVIGATION SIDEBAR                                   */
+    /* ========================================================= */
+    .sidebar {
+      width: 250px;
+      background: var(--sidebar);
+      border-right: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .sidebar-brand {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-icon {
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .brand-name { font-weight: 700; font-size: 1.05rem; }
+
+    /* Role Switcher in Sidebar */
+    .role-box {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--card-border);
+      background: #0b101c;
+    }
+    .role-label { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .role-select {
+      width: 100%;
+      margin-top: 6px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Navigation Links */
+    .nav-list { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-item:hover { color: white; background: #162035; }
+    .nav-item.active { background: var(--primary); color: white; }
+
+    .sidebar-footer {
+      padding: 14px 18px;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.72rem;
+      color: var(--emerald);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pulse-dot { width: 6px; height: 6px; background: var(--emerald); border-radius: 50%; box-shadow: 0 0 8px var(--emerald); }
+
+    /* ========================================================= */
+    /* MAIN VIEW CONTAINER                                       */
+    /* ========================================================= */
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      flex-shrink: 0;
+    }
+    .header-title { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+    .content-area { flex: 1; overflow-y: auto; position: relative; }
+    .view-pane { padding: 24px; display: none; }
+    .view-pane.active { display: block; }
+
+    /* DASHBOARD FILTER BAR */
+    .filter-bar {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .date-controls { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-muted); }
+    .date-input {
+      background: #090d16;
+      border: 1px solid var(--card-border);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    .preset-btn {
+      background: #1a2234;
+      border: 1px solid var(--card-border);
+      color: #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    .preset-btn:hover, .preset-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+    /* CHART SECTION */
+    .chart-panel {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .metric-selectors { display: flex; gap: 8px; flex-wrap: wrap; }
+    .metric-chip {
+      background: #090d16;
+      border: 1px solid var(--card-border);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      transition: 0.2s;
+    }
+    .metric-chip.active { color: white; border-color: currentColor; }
+    .chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .chart-canvas-wrapper { position: relative; height: 280px; width: 100%; }
+
+    /* KPI CARDS */
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .kpi-box { background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; }
+    .kpi-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi-val { font-size: 1.5rem; font-weight: 700; margin: 8px 0 4px 0; color: white; }
+    .kpi-foot { font-size: 0.75rem; color: var(--emerald); font-weight: 500; }
+    .kpi-foot.alert { color: var(--rose); }
+
+    .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .dash-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; padding: 20px; }
+    .dash-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+
+    table.data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    table.data-table th { text-align: left; padding: 10px; color: var(--text-muted); border-bottom: 1px solid var(--card-border); font-weight: 600; }
+    table.data-table td { padding: 12px 10px; border-bottom: 1px solid #1a2234; }
+    table.data-table tr:last-child td { border-bottom: none; }
+    .badge-tag { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+    .tag-footwear { background: rgba(244,63,94,0.15); color: var(--rose); }
+    .tag-apparel { background: rgba(59,130,246,0.15); color: var(--primary); }
+    .tag-critical { background: rgba(244,63,94,0.2); color: var(--rose); font-weight: 700; }
+
+    /* ========================================================= */
+    /* AI COPILOT 3-PANEL VIEW                                   */
+    /* ========================================================= */
+    #aiView { padding: 0; height: 100%; display: none; }
+    #aiView.active { display: flex; }
+
+    /* Left: Approvals Panel */
+    .copilot-left {
+      width: 280px;
+      background: var(--sidebar);
+      border-right: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    /* Center: Chat Stream */
+    .copilot-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0b0f19;
+      border-right: 1px solid var(--card-border);
+      overflow: hidden;
+    }
+    /* Right: Tool Trace Panel */
+    .copilot-right {
+      width: 320px;
+      background: var(--sidebar);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .panel-heading {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Workflow Dropdown Bar in Copilot Center */
+    .workflow-bar {
+      padding: 10px 16px;
+      background: var(--card);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .workflow-select {
+      flex: 1;
+      background: #090d16;
+      border: 1px solid var(--card-border);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      outline: none;
+    }
+    .workflow-run-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .chat-msg { max-width: 88%; padding: 14px 18px; border-radius: 10px; font-size: 0.88rem; line-height: 1.5; }
+    .chat-msg.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .chat-msg.assistant { background: var(--card); border: 1px solid var(--card-border); align-self: flex-start; border-bottom-left-radius: 2px; }
+    .chat-msg.assistant h1, .chat-msg.assistant h2, .chat-msg.assistant h3 { color: #60a5fa; margin: 10px 0 6px 0; font-size: 0.95rem; }
+    .chat-msg.assistant ul, .chat-msg.assistant ol { margin-left: 20px; margin-bottom: 8px; }
+    .chat-msg.assistant table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.8rem; }
+    .chat-msg.assistant th, .chat-msg.assistant td { border: 1px solid var(--card-border); padding: 6px 10px; }
+
+    .thinking-box {
+      background: #090d16;
+      border: 1px solid #1f293d;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      font-size: 0.78rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .thinking-title { color: #38bdf8; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .spinner-sm { width: 12px; height: 12px; border: 2px solid #38bdf8; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .step-log { color: #94a3b8; line-height: 1.6; display: flex; flex-direction: column; gap: 3px; }
+    .step-item.success { color: var(--emerald); }
+
+    .chat-bottom { padding: 14px 20px; background: var(--card); border-top: 1px solid var(--card-border); display: flex; gap: 10px; }
+    .chat-bottom input { flex: 1; background: #090d16; border: 1px solid var(--card-border); padding: 12px 16px; border-radius: 8px; color: white; outline: none; }
+    .chat-bottom input:focus { border-color: var(--primary); }
+    .chat-bottom button { background: var(--primary); color: white; border: none; padding: 0 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+    /* Approval & Trace Cards */
+    .approval-item {
+      background: #0b0f19;
+      border: 1px solid var(--card-border);
+      border-left: 4px solid var(--amber);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      font-size: 0.78rem;
+    }
+    .approval-btn-row { display: flex; gap: 6px; margin-top: 10px; }
+    .appr-btn { flex: 1; padding: 6px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.72rem; }
+    .appr-btn.approve { background: var(--emerald); color: white; }
+    .appr-btn.reject { background: var(--rose); color: white; }
+    .appr-btn.execute { background: var(--cyan); color: #0b0f19; font-weight: 700; }
+
+    .trace-item { background: #0b0f19; border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+    .trace-head { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; font-weight: 600; color: #38bdf8; }
+    .trace-time { color: var(--emerald); font-size: 0.7rem; }
+    .trace-args { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-muted); margin-top: 4px; word-break: break-all; }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================= -->
+  <!-- LEFT NAVIGATION SIDEBAR                                   -->
+  <!-- ========================================================= -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-name">ShopOps</div>
+    </div>
+
+    <!-- Active Role Option -->
+    <div class="role-box">
+      <div class="role-label">Active Permissions Role:</div>
+      <select id="userRoleSelect" class="role-select">
+        <option value="store_manager" selected>Store Manager (Admin)</option>
+        <option value="operations_analyst">Operations Analyst</option>
+        <option value="support_rep">Support Specialist</option>
+      </select>
+    </div>
+
+    <!-- Navigation Menu Items -->
+    <nav class="nav-list">
+      <div class="nav-item active" onclick="switchNav('analytics')">
+        <span>📈</span> Store Analytics
+      </div>
+      <div class="nav-item" onclick="switchNav('confirmed_orders')">
+        <span>✅</span> Confirmed Orders
+      </div>
+      <div class="nav-item" onclick="switchNav('new_orders')">
+        <span>⚡</span> Live & New Orders
+      </div>
+      <div class="nav-item" onclick="switchNav('cancelled_orders')">
+        <span>❌</span> Cancelled Orders
+      </div>
+      <div class="nav-item" onclick="switchNav('returns')">
+        <span>🔄</span> Returns & Refunds
+      </div>
+      <div class="nav-item" onclick="switchNav('copilot')">
+        <span>🤖</span> AI Operations Copilot
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="pulse-dot"></div>
+      <span>All Systems Operational</span>
+    </div>
+  </aside>
+
+  <!-- ========================================================= -->
+  <!-- MAIN WORKSPACE                                            -->
+  <!-- ========================================================= -->
+  <div class="main-wrapper">
+    <header>
+      <div class="header-title" id="pageTitle">📈 Shop Graph & Analytics Overview</div>
+      <div style="font-size: 0.75rem; color: var(--text-muted);" id="headerClock">Timezone: UTC</div>
+    </header>
+
+    <div class="content-area">
+
+      <!-- ===================================================== -->
+      <!-- VIEW 1: Store Graph Analytics & Overview              -->
+      <!-- ===================================================== -->
+      <section id="viewAnalytics" class="view-pane active">
+        <!-- Timeline Toolbar -->
+        <div class="filter-bar">
+          <div class="date-controls">
+            <span>Timeline:</span>
+            <label>From: <input type="date" id="dateFrom" class="date-input" /></label>
+            <label>To: <input type="date" id="dateTo" class="date-input" /></label>
+            <button class="preset-btn" onclick="applyCustomDateFilter()">Apply</button>
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            <button class="preset-btn" onclick="setPresetRange(7, this)">7 Days</button>
+            <button class="preset-btn active" id="btnPreset30" onclick="setPresetRange(30, this)">30 Days</button>
+            <button class="preset-btn" onclick="setPresetRange(90, this)">90 Days</button>
+            <button class="preset-btn" onclick="setPresetRange(365, this)">Full Year</button>
+          </div>
+        </div>
+
+        <!-- Interactive Chart Panel -->
+        <div class="chart-panel">
+          <div class="chart-header">
+            <span style="font-weight: 700; font-size: 0.95rem;">Financial & Operational Run-Rates</span>
+            <div class="metric-selectors">
+              <button class="metric-chip active" id="chip-gross" onclick="toggleMetric('gross_revenue')" style="color: #3b82f6;">
+                <span class="chip-dot" style="background: #3b82f6;"></span> Gross Sales ($)
+              </button>
+              <button class="metric-chip active" id="chip-net" onclick="toggleMetric('net_revenue')" style="color: #10b981;">
+                <span class="chip-dot" style="background: #10b981;"></span> Net Sales ($)
+              </button>
+              <button class="metric-chip active" id="chip-margin" onclick="toggleMetric('margin')" style="color: #a855f7;">
+                <span class="chip-dot" style="background: #a855f7;"></span> Profit Margin ($)
+              </button>
+              <button class="metric-chip" id="chip-orders" onclick="toggleMetric('orders')" style="color: #f59e0b;">
+                <span class="chip-dot" style="background: #f59e0b;"></span> Orders Count
+              </button>
+              <button class="metric-chip" id="chip-refunds" onclick="toggleMetric('refund_amount')" style="color: #f43f5e;">
+                <span class="chip-dot" style="background: #f43f5e;"></span> Refunds ($)
+              </button>
+              <button class="metric-chip" id="chip-roi" onclick="toggleMetric('roi_margin_pct')" style="color: #06b6d4;">
+                <span class="chip-dot" style="background: #06b6d4;"></span> Margin % / ROI
+              </button>
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper">
+            <canvas id="analyticsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top 4 KPI Metrics -->
+        <div class="kpi-row">
+          <div class="kpi-box">
+            <div class="kpi-title">Gross Revenue</div>
+            <div class="kpi-val" id="kpiGross">$0.00</div>
+            <div class="kpi-foot">Net Revenue: <span id="kpiNet">$0.00</span></div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-title">Completed Orders</div>
+            <div class="kpi-val" id="kpiOrders">0</div>
+            <div class="kpi-foot">AOV: <span id="kpiAOV">$0.00</span></div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-title">Gross Margin & ROI</div>
+            <div class="kpi-val" id="kpiMargin" style="color: #a855f7;">$0.00</div>
+            <div class="kpi-foot" style="color: #06b6d4;">ROI Margin: <span id="kpiROI">0.0%</span></div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-title">Refund Deductions</div>
+            <div class="kpi-val" id="kpiRefunds" style="color: var(--rose);">$0.00</div>
+            <div class="kpi-foot alert">Footwear Spike Active</div>
+          </div>
+        </div>
+
+        <!-- Best Sellers vs Slow Movers -->
+        <div class="grid-2col">
+          <div class="dash-card">
+            <h3>🔥 Top 5 Best-Selling Products in Range</h3>
+            <table class="data-table">
+              <thead><tr><th>Product</th><th>Category</th><th>Units</th><th>Revenue</th></tr></thead>
+              <tbody id="bestProductsBody"></tbody>
+            </table>
+          </div>
+          <div class="dash-card">
+            <h3>⏳ Slow-Selling Inventory (Discount Candidates)</h3>
+            <table class="data-table">
+              <thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Action</th></tr></thead>
+              <tbody id="worstProductsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-2col">
+          <div class="dash-card">
+            <h3>📁 Category Revenue & Return Volumes</h3>
+            <table class="data-table">
+              <thead><tr><th>Category</th><th>Orders</th><th>Revenue</th><th>Refunds</th></tr></thead>
+              <tbody id="categoriesBody"></tbody>
+            </table>
+          </div>
+          <div class="dash-card">
+            <h3>🚨 Critical Replenishment Radar (0 Stock Items)</h3>
+            <table class="data-table">
+              <thead><tr><th>Product</th><th>SKU</th><th>Color / Size</th><th>Stock</th></tr></thead>
+              <tbody id="stockoutsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- VIEW 2: Confirmed Orders                              -->
+      <!-- ===================================================== -->
+      <section id="viewConfirmedOrders" class="view-pane">
+        <div class="dash-card">
+          <h3>✅ Confirmed Store Orders (Completed & Shipped)</h3>
+          <table class="data-table">
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Date (UTC)</th><th>Items</th><th>Total Amount</th><th>Status</th></tr></thead>
+            <tbody id="confirmedOrdersBody"><tr><td colspan="6" style="padding:16px;">Loading confirmed orders...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- VIEW 3: Live & New Orders (With Simulator)            -->
+      <!-- ===================================================== -->
+      <section id="viewNewOrders" class="view-pane">
+        <div class="dash-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3>⚡ Live Orders Stream & Simulation Engine</h3>
+            <button class="preset-btn" style="background: var(--cyan); color: #0b0f19; font-weight: 700;" onclick="triggerLiveSimulator()">
+              ⚡ Simulate New Incoming Orders
+            </button>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;">
+            Simulates real-time incoming Shopify checkouts, atomic inventory ledger deductions, and order insertions.
+          </p>
+          <table class="data-table">
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Date (UTC)</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody id="newOrdersBody"><tr><td colspan="5" style="padding:16px;">Loading recent orders...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- VIEW 4: Cancelled Orders                              -->
+      <!-- ===================================================== -->
+      <section id="viewCancelledOrders" class="view-pane">
+        <div class="dash-card">
+          <h3>❌ Cancelled & Friction Orders (Scenario 6 Audit)</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;">
+            Monitors checkout friction, payment failures, and customer-cancelled baskets (elevated rate in last 7 days).
+          </p>
+          <table class="data-table">
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Date (UTC)</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody id="cancelledOrdersBody"><tr><td colspan="5" style="padding:16px;">Loading cancelled orders...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- VIEW 5: Returns & Refunds                             -->
+      <!-- ===================================================== -->
+      <section id="viewReturns" class="view-pane">
+        <div class="dash-card">
+          <h3>🔄 Processed Returns & Category Refund Audit</h3>
+          <p style="font-size: 0.8rem; color: var(--rose); margin-bottom: 14px;">
+            ⚠️ Anomaly Alert: ~60% of all refunds originate in Footwear citing sizing/fit issues (Scenario 4).
+          </p>
+          <table class="data-table">
+            <thead><tr><th>Refund ID</th><th>Order #</th><th>Customer</th><th>Category</th><th>Refund Amount</th><th>Reason</th></tr></thead>
+            <tbody id="refundsBody"><tr><td colspan="6" style="padding:16px;">Loading refunds audit...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- VIEW 6: AI Operations Copilot (3-Panel Workspace)     -->
+      <!-- ===================================================== -->
+      <section id="aiView" class="view-pane">
+        <!-- Left Panel: Admin Approvals -->
+        <aside class="copilot-left">
+          <div class="panel-heading">
+            <span>📥 Admin Approvals</span>
+            <span class="badge-tag" style="background:var(--amber); color:black;" id="approvalCount">0</span>
+          </div>
+          <div id="approvalsList"></div>
+        </aside>
+
+        <!-- Center Panel: Assistant Chat -->
+        <section class="copilot-center">
+          <!-- Quick Workflow Dropdown Selector -->
+          <div class="workflow-bar">
+            <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;">Quick Workflow:</span>
+            <select id="quickWorkflowDropdown" class="workflow-select">
+              <option value="A">📉 Workflow A: 7-Day Sales Decline Diagnosis</option>
+              <option value="B">📦 Workflow B: Replenishment & Stockout Run-Rate</option>
+              <option value="C">🔎 Workflow C: Order #100 Line-Item Reconciliation</option>
+              <option value="D">🏷️ Workflow D: Draft 10% Discount for Approval</option>
+            </select>
+            <button class="workflow-run-btn" onclick="executeSelectedWorkflow()">Run Workflow ➔</button>
+          </div>
+
+          <!-- Chat Stream -->
+          <div class="chat-box" id="chatBox">
+            <div class="chat-msg assistant">
+              Hello! I am your <strong>ShopOps AI Assistant</strong>. Ask any business question or pick a workflow above. You can inspect live tool calls on the right and manage approval proposals on the left.
+            </div>
+          </div>
+
+          <form class="chat-bottom" onsubmit="handleChatSubmit(event)">
+            <input type="text" id="chatInput" placeholder="Ask an operations question or execute investigation..." autocomplete="off" />
+            <button type="submit" id="sendBtn">Investigate</button>
+          </form>
+        </section>
+
+        <!-- Right Panel: Live Tool Execution Trace -->
+        <aside class="copilot-right">
+          <div class="panel-heading">
+            <span>🔍 Live Tool Execution Trace</span>
+          </div>
+          <div id="traceList"></div>
+        </aside>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- JAVASCRIPT CONTROLLER                                     -->
+  <!-- ========================================================= -->
+  <script>
+    const userRoleSelect = document.getElementById("userRoleSelect");
+    const pageTitle = document.getElementById("pageTitle");
+    const dateFrom = document.getElementById("dateFrom");
+    const dateTo = document.getElementById("dateTo");
+    const chatBox = document.getElementById("chatBox");
+    const chatInput = document.getElementById("chatInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const traceList = document.getElementById("traceList");
+    const approvalsList = document.getElementById("approvalsList");
+    const approvalCount = document.getElementById("approvalCount");
+
+    let chartInstance = null;
+    let rawTimeseries = [];
+
+    const activeMetrics = {
+      gross_revenue: true,
+      net_revenue: true,
+      margin: true,
+      orders: false,
+      refund_amount: false,
+      roi_margin_pct: false
+    };
+
+    // Navigation Switcher
+    function switchNav(viewKey) {
+      document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
+      document.querySelectorAll(".view-pane").forEach(pane => pane.classList.remove("active"));
+
+      const titles = {
+        analytics: "📈 Shop Graph & Analytics Overview",
+        confirmed_orders: "✅ Confirmed Store Orders Ledger",
+        new_orders: "⚡ Live Orders Stream & Simulator",
+        cancelled_orders: "❌ Cancelled Orders & Friction Audit",
+        returns: "🔄 Processed Returns & Category Refund Audit",
+        copilot: "🤖 Autonomous AI Operations Copilot"
+      };
+      pageTitle.innerText = titles[viewKey] || "ShopOps";
+
+      if (viewKey === 'analytics') {
+        document.querySelectorAll(".nav-item")[0].classList.add("active");
+        document.getElementById("viewAnalytics").classList.add("active");
+        loadDashboardData();
+      } else if (viewKey === 'confirmed_orders') {
+        document.querySelectorAll(".nav-item")[1].classList.add("active");
+        document.getElementById("viewConfirmedOrders").classList.add("active");
+        loadOrdersFeed('completed', 'confirmedOrdersBody');
+      } else if (viewKey === 'new_orders') {
+        document.querySelectorAll(".nav-item")[2].classList.add("active");
+        document.getElementById("viewNewOrders").classList.add("active");
+        loadOrdersFeed('all', 'newOrdersBody');
+      } else if (viewKey === 'cancelled_orders') {
+        document.querySelectorAll(".nav-item")[3].classList.add("active");
+        document.getElementById("viewCancelledOrders").classList.add("active");
+        loadOrdersFeed('cancelled', 'cancelledOrdersBody');
+      } else if (viewKey === 'returns') {
+        document.querySelectorAll(".nav-item")[4].classList.add("active");
+        document.getElementById("viewReturns").classList.add("active");
+        loadRefundsFeed();
+      } else if (viewKey === 'copilot') {
+        document.querySelectorAll(".nav-item")[5].classList.add("active");
+        document.getElementById("aiView").classList.add("active");
+        fetchToolRuns();
+        fetchApprovals();
+      }
+    }
+
+    function initDateInputs() {
+      const today = new Date();
+      const past = new Date();
+      past.setDate(today.getDate() - 30);
+      dateTo.value = today.toISOString().split("T")[0];
+      dateFrom.value = past.toISOString().split("T")[0];
+    }
+
+    function setPresetRange(days, btn) {
+      document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+      const today = new Date();
+      const past = new Date();
+      past.setDate(today.getDate() - days);
+      dateTo.value = today.toISOString().split("T")[0];
+      dateFrom.value = past.toISOString().split("T")[0];
+      loadDashboardData();
+    }
+
+    function applyCustomDateFilter() {
+      document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
+      loadDashboardData();
+    }
+
+    function toggleMetric(metricKey) {
+      activeMetrics[metricKey] = !activeMetrics[metricKey];
+      const chipMap = {
+        gross_revenue: "chip-gross",
+        net_revenue: "chip-net",
+        margin: "chip-margin",
+        orders: "chip-orders",
+        refund_amount: "chip-refunds",
+        roi_margin_pct: "chip-roi"
+      };
+      const chip = document.getElementById(chipMap[metricKey]);
+      if (activeMetrics[metricKey]) chip.classList.add("active");
+      else chip.classList.remove("active");
+      renderChart();
+    }
+
+    async function loadDashboardData() {
+      const from = dateFrom.value;
+      const to = dateTo.value;
+      try {
+        const res = await fetch(`/api/dashboard-analytics?start_date=${from}&end_date=${to}`);
+        const data = await res.json();
+        const kpi = data.kpi || {};
+
+        document.getElementById("kpiGross").innerText = "$" + Number(kpi.gross_revenue || 0).toLocaleString();
+        document.getElementById("kpiNet").innerText = "$" + Number(kpi.net_revenue || 0).toLocaleString();
+        document.getElementById("kpiOrders").innerText = Number(kpi.orders || 0).toLocaleString();
+        document.getElementById("kpiAOV").innerText = "$" + Number(kpi.aov || 0).toFixed(2);
+        document.getElementById("kpiMargin").innerText = "$" + Number(kpi.total_margin || 0).toLocaleString();
+        document.getElementById("kpiROI").innerText = Number(kpi.margin_pct || 0).toFixed(1) + "%";
+        document.getElementById("kpiRefunds").innerText = "$" + Number(kpi.refund_amount || 0).toLocaleString();
+
+        document.getElementById("bestProductsBody").innerHTML = (data.best_products || []).map(p => `
+          <tr>
+            <td><strong>${p.title}</strong></td>
+            <td><span class="badge-tag tag-apparel">${p.category}</span></td>
+            <td>${p.units_sold}</td>
+            <td>$${Number(p.revenue || 0).toLocaleString()}</td>
+          </tr>
+        `).join("") || '<tr><td colspan="4" style="color:var(--text-muted); padding:12px;">No sales in range.</td></tr>';
+
+        document.getElementById("worstProductsBody").innerHTML = (data.worst_products || []).map(p => `
+          <tr>
+            <td>${p.title}</td>
+            <td><span class="badge-tag">${p.category}</span></td>
+            <td>${p.current_stock} units</td>
+            <td><button class="preset-btn" style="padding: 2px 8px; font-size: 0.7rem;" onclick="proposeDiscountForProduct(${p.product_id}, '${p.title.replace(/'/g, "")}')">Draft Discount</button></td>
+          </tr>
+        `).join("") || '<tr><td colspan="4" style="color:var(--text-muted); padding:12px;">No slow movers.</td></tr>';
+
+        document.getElementById("categoriesBody").innerHTML = (data.categories || []).map(c => `
+          <tr>
+            <td><strong>${c.category}</strong></td>
+            <td>${c.orders_count}</td>
+            <td>$${Number(c.category_revenue || 0).toLocaleString()}</td>
+            <td><span class="badge-tag ${c.category === 'Footwear' ? 'tag-footwear' : ''}">${c.refunds_count || 0} refunds</span></td>
+          </tr>
+        `).join("") || '<tr><td colspan="4" style="color:var(--text-muted); padding:12px;">No category records.</td></tr>';
+
+        document.getElementById("stockoutsBody").innerHTML = (data.stockouts || []).map(s => `
+          <tr>
+            <td>${s.title}</td>
+            <td><code>${s.sku}</code></td>
+            <td>${s.color} / ${s.size}</td>
+            <td><span class="badge-tag tag-critical">0 units</span></td>
+          </tr>
+        `).join("") || '<tr><td colspan="4" style="color:var(--text-muted); padding:12px;">All catalog items in stock.</td></tr>';
+
+        const tsRes = await fetch(`/api/timeseries?start_date=${from}&end_date=${to}`);
+        const tsData = await tsRes.json();
+        rawTimeseries = tsData.points || [];
+        renderChart();
+      } catch (err) {
+        console.error("Analytics load failed:", err);
+      }
+    }
+
+    function renderChart() {
+      if (!rawTimeseries || rawTimeseries.length === 0) return;
+      if (typeof Chart === 'undefined') return;
+
+      const labels = rawTimeseries.map(p => p.date);
+      const datasets = [];
+
+      if (activeMetrics.gross_revenue) {
+        datasets.push({
+          label: "Gross Sales ($)",
+          data: rawTimeseries.map(p => p.gross_revenue),
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59, 130, 246, 0.08)",
+          fill: true,
+          tension: 0.3,
+          yAxisID: "yCurrency"
+        });
+      }
+      if (activeMetrics.net_revenue) {
+        datasets.push({
+          label: "Net Sales ($)",
+          data: rawTimeseries.map(p => p.net_revenue),
+          borderColor: "#10b981",
+          borderDash: [4, 4],
+          tension: 0.3,
+          yAxisID: "yCurrency"
+        });
+      }
+      if (activeMetrics.margin) {
+        datasets.push({
+          label: "Profit Margin ($)",
+          data: rawTimeseries.map(p => p.margin),
+          borderColor: "#a855f7",
+          backgroundColor: "rgba(168, 85, 247, 0.05)",
+          fill: true,
+          tension: 0.3,
+          yAxisID: "yCurrency"
+        });
+      }
+      if (activeMetrics.orders) {
+        datasets.push({
+          label: "Orders Count",
+          data: rawTimeseries.map(p => p.orders),
+          borderColor: "#f59e0b",
+          tension: 0.2,
+          yAxisID: "yCount"
+        });
+      }
+      if (activeMetrics.refund_amount) {
+        datasets.push({
+          label: "Refunds ($)",
+          data: rawTimeseries.map(p => p.refund_amount),
+          borderColor: "#f43f5e",
+          tension: 0.2,
+          yAxisID: "yCurrency"
+        });
+      }
+      if (activeMetrics.roi_margin_pct) {
+        datasets.push({
+          label: "Margin % / ROI",
+          data: rawTimeseries.map(p => p.roi_margin_pct),
+          borderColor: "#06b6d4",
+          tension: 0.3,
+          yAxisID: "yCount"
+        });
+      }
+
+      const canvas = document.getElementById("analyticsChart");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: "line",
+        data: { labels: labels, datasets: datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: { backgroundColor: "#1e293b", borderColor: "#334155", borderWidth: 1 }
+          },
+          scales: {
+            x: { grid: { color: "#1a2234" }, ticks: { color: "#64748b", font: { size: 10 } } },
+            yCurrency: {
+              type: "linear",
+              position: "left",
+              grid: { color: "#1a2234" },
+              ticks: { color: "#64748b", callback: v => "$" + Number(v).toLocaleString() }
+            },
+            yCount: {
+              type: "linear",
+              display: activeMetrics.orders || activeMetrics.roi_margin_pct,
+              position: "right",
+              grid: { drawOnChartArea: false },
+              ticks: { color: "#f59e0b" }
+            }
+          }
+        }
+      });
+    }
+
+    // Load Orders Feed
+    async function loadOrdersFeed(statusFilter, tableBodyId) {
+      try {
+        const res = await fetch(`/api/orders-list?status=${statusFilter}&limit=35`);
+        const data = await res.json();
+        document.getElementById(tableBodyId).innerHTML = (data.orders || []).map(o => `
+          <tr>
+            <td><strong>#${o.order_id}</strong></td>
+            <td>${o.customer_name} <br><span style="font-size:0.7rem; color:var(--text-muted);">${o.email}</span></td>
+            <td>${o.date}</td>
+            <td>${o.item_count || 1} items</td>
+            <td><strong>$${Number(o.total_amount).toFixed(2)}</strong></td>
+            <td><span class="badge-tag" style="background:${o.status === 'completed' ? 'rgba(16,185,129,0.15)' : (o.status === 'cancelled' ? 'rgba(244,63,94,0.15)' : 'rgba(245,158,11,0.15)')}; color:${o.status === 'completed' ? 'var(--emerald)' : (o.status === 'cancelled' ? 'var(--rose)' : 'var(--amber)')};">${o.status.toUpperCase()}</span></td>
+          </tr>
+        `).join("") || '<tr><td colspan="6" style="padding:16px;">No orders found.</td></tr>';
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Load Refunds Feed
+    async function loadRefundsFeed() {
+      try {
+        const res = await fetch(`/api/refunds-list?limit=35`);
+        const data = await res.json();
+        document.getElementById("refundsBody").innerHTML = (data.refunds || []).map(r => `
+          <tr>
+            <td>#${r.refund_id}</td>
+            <td><strong>#${r.order_id}</strong></td>
+            <td>${r.customer_name}</td>
+            <td><span class="badge-tag ${r.primary_category === 'Footwear' ? 'tag-footwear' : ''}">${r.primary_category || 'General'}</span></td>
+            <td><strong style="color:var(--rose);">-$${Number(r.amount).toFixed(2)}</strong></td>
+            <td>${r.reason}</td>
+          </tr>
+        `).join("") || '<tr><td colspan="6" style="padding:16px;">No refunds processed.</td></tr>';
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Live Simulator Action
+    async function triggerLiveSimulator() {
+      try {
+        const res = await fetch("/api/simulator/tick?count=3", { method: "POST" });
+        const data = await res.json();
+        alert(`⚡ Simulator Tick: Created ${data.orders_created} live orders & deducted inventory.`);
+        loadOrdersFeed('all', 'newOrdersBody');
+      } catch (e) {
+        alert("Simulator error: " + e.message);
+      }
+    }
+
+    // Quick Workflow Dropdown Trigger
+    function executeSelectedWorkflow() {
+      const selected = document.getElementById("quickWorkflowDropdown").value;
+      if (selected === 'A') {
+        chatInput.value = "Compare the last seven complete days with the previous seven. What drove the revenue change? Distinguish association from causation.";
+      } else if (selected === 'B') {
+        chatInput.value = "Which products may run out within two weeks, and how much should we reorder for our critical items?";
+      } else if (selected === 'C') {
+        chatInput.value = "Check order #100. What was purchased, was anything refunded, and what is its current status?";
+      } else if (selected === 'D') {
+        chatInput.value = "We have slow-selling jackets (Product ID 42). Propose a 10 percent discount for 3 days and submit it for approval.";
+      }
+      handleChatSubmit();
+    }
+
+    function proposeDiscountForProduct(id, title) {
+      switchNav('copilot');
+      chatInput.value = `Propose a 10 percent discount for 3 days on product ID ${id} (${title}) and submit it for manager approval.`;
+      handleChatSubmit();
+    }
+
+    // Real-Time Streaming Chat
+    async function handleChatSubmit(e) {
+      if (e) e.preventDefault();
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      const userBubble = document.createElement("div");
+      userBubble.className = "chat-msg user";
+      userBubble.innerText = message;
+      chatBox.appendChild(userBubble);
+      chatInput.value = "";
+      chatInput.disabled = true;
+      sendBtn.disabled = true;
+
+      const aiBubble = document.createElement("div");
+      aiBubble.className = "chat-msg assistant";
+      aiBubble.innerHTML = `
+        <div class="thinking-box" id="activeThinking">
+          <div class="thinking-title">
+            <div class="spinner-sm"></div>
+            <span id="currentStatusText">Initializing investigation...</span>
+          </div>
+          <div class="step-log" id="stepLog"></div>
+        </div>
+        <div id="aiAnswerContent"></div>
+      `;
+      chatBox.appendChild(aiBubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      const currentStatusText = aiBubble.querySelector("#currentStatusText");
+      const stepLog = aiBubble.querySelector("#stepLog");
+      const aiAnswerContent = aiBubble.querySelector("#aiAnswerContent");
+      const activeThinking = aiBubble.querySelector("#activeThinking");
+
+      try {
+        const response = await fetch("/api/chat/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: message, user_role: userRoleSelect.value })
+        });
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n\n");
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const eventData = JSON.parse(line.replace("data: ", ""));
+
+              if (eventData.type === "status" || eventData.type === "tool_start") {
+                currentStatusText.innerText = eventData.message;
+              } else if (eventData.type === "tool_done") {
+                const step = document.createElement("div");
+                step.className = "step-item success";
+                step.innerText = eventData.message;
+                stepLog.appendChild(step);
+                fetchToolRuns();
+              } else if (eventData.type === "complete") {
+                activeThinking.style.display = "none";
+                aiAnswerContent.innerHTML = marked.parse(eventData.answer);
+                fetchToolRuns();
+                fetchApprovals();
+              } else if (eventData.type === "error") {
+                activeThinking.style.display = "none";
+                aiAnswerContent.innerHTML = `⚠️ **Error:** ${eventData.message}`;
+              }
+              chatBox.scrollTop = chatBox.scrollHeight;
+            }
+          }
+        }
+      } catch (err) {
+        activeThinking.style.display = "none";
+        aiAnswerContent.innerHTML = `❌ **Connection Error:** ${err.message}`;
+      } finally {
+        chatInput.disabled = false;
+        sendBtn.disabled = false;
+        chatInput.focus();
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    }
+
+    // Approvals Management
+    async function fetchApprovals() {
+      try {
+        const res = await fetch("/api/approvals");
+        const data = await res.json();
+        const pending = (data.approvals || []).filter(a => a.status === 'pending');
+        approvalCount.innerText = pending.length;
+
+        approvalsList.innerHTML = (data.approvals || []).map(app => {
+          const isExecuted = app.payload && app.payload.executed === true;
+          const displayStatus = isExecuted ? "EXECUTED" : app.status.toUpperCase();
+          const borderClass = isExecuted ? 'var(--cyan)' : (app.status === 'approved' ? 'var(--emerald)' : (app.status === 'pending' ? 'var(--amber)' : 'var(--rose)'));
+
+          return `
+            <div class="approval-item" style="border-left-color: ${borderClass};">
+              <strong>Proposal #${app.request_id}: ${app.action}</strong>
+              <div style="color: var(--text-muted); font-size: 0.72rem; margin: 4px 0;">
+                ${app.payload.reason || 'N/A'}<br>
+                Status: <strong style="color: ${borderClass}">${displayStatus}</strong>
+              </div>
+              ${app.status === 'pending' ? `
+                <div class="approval-btn-row">
+                  <button class="appr-btn approve" onclick="resolveApproval(${app.request_id}, 'approved')">Approve</button>
+                  <button class="appr-btn reject" onclick="resolveApproval(${app.request_id}, 'rejected')">Reject</button>
+                </div>
+              ` : (app.status === 'approved' && !isExecuted ? `
+                <div class="approval-btn-row">
+                  <button class="appr-btn execute" onclick="executeProposal(${app.request_id})">⚡ Execute Store Write</button>
+                </div>
+              ` : `<div style="font-size: 0.7rem; color: var(--text-muted);">Applied to Database</div>`)}
+            </div>
+          `;
+        }).join("") || '<div style="color: var(--text-muted); font-size: 0.78rem;">No pending approvals.</div>';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function resolveApproval(id, status) {
+      const role = userRoleSelect.value;
+      try {
+        const res = await fetch(`/api/approvals/${id}/action`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: status, reviewer: role })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          fetchApprovals();
+          loadDashboardData();
+        } else {
+          alert(`Review Blocked: ${data.detail}`);
+        }
+      } catch (err) {
+        alert("Action failed: " + err.message);
+      }
+    }
+
+    async function executeProposal(id) {
+      const role = userRoleSelect.value;
+      try {
+        const res = await fetch(`/api/approvals/${id}/execute?user_role=${role}`, { method: "POST" });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch (e) { alert("Server Error: " + text); return; }
+
+        if (res.ok) {
+          alert(`✅ Success: ${data.message}\nCode: ${data.execution_details?.discount_code_created || 'Applied'}`);
+          fetchApprovals();
+          loadDashboardData();
+        } else {
+          alert(`⚠️ Execution Blocked: ${data.detail || text}`);
+        }
+      } catch (err) {
+        alert("Execution error: " + err.message);
+      }
+    }
+
+    async function fetchToolRuns() {
+      try {
+        const res = await fetch("/api/tool-runs?limit=6");
+        const data = await res.json();
+        traceList.innerHTML = (data.tool_runs || []).map(run => `
+          <div class="trace-item">
+            <div class="trace-head">
+              <span>🔧 ${run.tool}()</span>
+              <span class="trace-time">${run.duration_ms} ms</span>
+            </div>
+            <div class="trace-args">${run.arguments}</div>
+          </div>
+        `).join("") || '<div style="color: var(--text-muted); font-size: 0.78rem;">No recent executions.</div>';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Initialize Dashboard on load
+    initDateInputs();
+    loadDashboardData();
+  </script>
+</body>
+</html>
